@@ -46,6 +46,11 @@ WEBKIT_DISABLE_DMABUF_RENDERER=1 sudo -E myapp.AppImage
 - Rust programming environment (for building from source)
 - Secondary keyboard or input device
 
+### x11 (and Wayland)
+I tested MacroKeyB with KDE Plasma x11 and Wayland.
+- x11: everything should work
+- Wayland: everything might work but sending keys depends on DE, for instance KDE Wayland worked for me.
+
 ### Why Root Privileges Are Required
 MacroKeyB requires root privileges for three essential functions:
 
