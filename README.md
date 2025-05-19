@@ -1,6 +1,6 @@
 # MacroKeyB
 
-![MacroKeyB Logo](https://github.com/spinalcord/MacroKeyB/blob/main/ReadmeImages/icon.png?raw=true)
+<img src="https://github.com/spinalcord/MacroKeyB/blob/main/ReadmeImages/icon.png?raw=true" width="200" alt="MacroKeyB Logo">
 
 MacroKeyB is a Linux-exclusive tool (currently) that transforms any secondary keyboard into a powerful macro controller. By intercepting and blocking input from a secondary keyboard, MacroKeyB allows you to assign custom Lua scripts to each key, creating a dedicated macro pad for productivity, gaming, or creative workflows. 
 
