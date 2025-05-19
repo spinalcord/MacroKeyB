@@ -6,6 +6,11 @@ MacroKeyB is a Linux-exclusive tool (currently) that transforms any secondary ke
 
 Please leave a star ⭐, if you want, that shows me I can continue this project 😀
 
+## Screenshots
+
+![MacroKeyB Demo2](https://github.com/spinalcord/MacroKeyB/blob/main/ReadmeImages/example3.gif?raw=true)
+![MacroKeyB Demo1](https://github.com/spinalcord/MacroKeyB/blob/main/ReadmeImages/example.jpg?raw=true)
+
 ## Installation/Download/Run
 
 I recomment the use of AppImage (https://github.com/spinalcord/MacroKeyB/releases)
@@ -32,10 +37,7 @@ WEBKIT_DISABLE_DMABUF_RENDERER=1 sudo -E myapp.AppImage
 - **Customizable**: Create, edit, and organize your macros with an intuitive interface
 - **Systemwide Integration**: Runs in the background with a convenient system tray icon
 
-## Screenshots
 
-![MacroKeyB Demo2](https://github.com/spinalcord/MacroKeyB/blob/main/ReadmeImages/example3.gif?raw=true)
-![MacroKeyB Demo1](https://github.com/spinalcord/MacroKeyB/blob/main/ReadmeImages/example.jpg?raw=true)
 
 ## Requirements/Limitations
 
