@@ -45,6 +45,7 @@ WEBKIT_DISABLE_DMABUF_RENDERER=1 sudo -E myapp.AppImage
 - Root privileges (required for keyboard input interception)
 - Rust programming environment (for building from source)
 - Secondary keyboard or input device
+- Your keyboard must include "keyboard" as name like "logitech g19 keyboard" (Working for a better solution)
 
 ### x11 (and Wayland)
 I tested MacroKeyB with KDE Plasma x11 and Wayland.
