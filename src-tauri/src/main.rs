@@ -5,7 +5,7 @@ fn main() {
     // Überprüfen, ob die Anwendung mit root-Rechten ausgeführt wird
     #[cfg(unix)]
     if !is_root() {
-        eprintln!("Use: 'sudo -E npm run tauri dev' to run this application");
+        eprintln!("Use: 'sudo -E ... \n In case you have a Nvidia card: WEBKIT_DISABLE_DMABUF_RENDERER=1 sudo -E");
         std::process::exit(1);
     }
 

@@ -51,7 +51,7 @@ function ListBox($$payload, $$props) {
     item.assignedKey.toLowerCase().includes(labelSearchTerm.toLowerCase());
     return true;
   });
-  $$payload.out += `<div class="list-box svelte-1gmx3qu"><div class="search-container svelte-1gmx3qu"><div class="search-field svelte-1gmx3qu"><label for="nameSearch" class="svelte-1gmx3qu">Name</label> <input id="nameSearch" type="text" placeholder="Search name..."${attr("value", nameSearchTerm)} class="search-input svelte-1gmx3qu"></div> <div class="search-field svelte-1gmx3qu"><label for="labelSearch" class="svelte-1gmx3qu">Label</label> <input id="labelSearch" type="text" placeholder="Search key..."${attr("value", labelSearchTerm)} class="search-input svelte-1gmx3qu"></div></div> <div class="list-content svelte-1gmx3qu">`;
+  $$payload.out += `<div class="list-box svelte-1gmx3qu"><div class="search-container svelte-1gmx3qu"><div class="search-field svelte-1gmx3qu"><label for="nameSearch" class="svelte-1gmx3qu">Name</label> <input id="nameSearch" type="text" placeholder="Search name..."${attr("value", nameSearchTerm)} class="search-input svelte-1gmx3qu"></div> <div class="search-field svelte-1gmx3qu"><label for="labelSearch" class="svelte-1gmx3qu">Key</label> <input id="labelSearch" type="text" placeholder="Search key..."${attr("value", labelSearchTerm)} class="search-input svelte-1gmx3qu"></div></div> <div class="list-content svelte-1gmx3qu">`;
   if (filteredItems.length > 0) {
     $$payload.out += "<!--[-->";
     const each_array = ensure_array_like(filteredItems);
@@ -234,6 +234,54 @@ const darkHighlightStyle = HighlightStyle.define([
 ]);
 const darkHighlighting = syntaxHighlighting(darkHighlightStyle);
 const luaCompletions = [
+  {
+    label: "press",
+    type: "function",
+    apply: snippet("press(${key})"),
+    info: "press(key) - Simulates pressing a key. Key can be a string (e.g., 'a', 'ctrl') or a keycode number."
+  },
+  {
+    label: "release",
+    type: "function",
+    apply: snippet("release(${key})"),
+    info: "release(key) - Simulates releasing a key. Key can be a string (e.g., 'a', 'ctrl') or a keycode number."
+  },
+  {
+    label: "tap",
+    type: "function",
+    apply: snippet("tap(${key}, ${delay})"),
+    info: "tap(key, [delay]) - Simulates pressing and releasing a key. Key can be a string or a keycode, optional delay in ms."
+  },
+  {
+    label: "wait",
+    type: "function",
+    apply: snippet("wait(${duration})"),
+    info: "wait(duration) - Waits for the specified duration in milliseconds."
+  },
+  {
+    label: "combo",
+    type: "function",
+    apply: snippet("combo({${key1}, ${key2}}, ${delay})"),
+    info: "combo(keys, [delay]) - Simulates pressing multiple keys at once. Keys can be a table, string, or keycode, with optional delay."
+  },
+  {
+    label: "flush",
+    type: "function",
+    apply: snippet("flush()"),
+    info: "flush() - Releases all currently pressed keys."
+  },
+  {
+    label: "exec_bash",
+    type: "function",
+    apply: snippet('exec_bash(${command}, {${"output"}})'),
+    info: "exec_bash(command, [options]) - Executes a bash command. Options can include: 'output', 'wait', 'background', 'root'."
+  },
+  {
+    label: "clipboard",
+    type: "function",
+    apply: snippet("clipboard()"),
+    info: "clipboard() - Returns the current content of the system clipboard as a string."
+  },
   // Keywords with snippet templates
   {
     label: "if",
@@ -471,6 +519,63 @@ listen("lua-execution", (event) => {
 listen("lua-error", (event) => {
   eventLuaError.set(event.payload.message);
 });
+const dialogState = writable({
+  visible: false,
+  type: "ok",
+  title: "",
+  message: "",
+  showInput: false,
+  inputLabel: "",
+  inputPlaceholder: "",
+  callback: () => {
+  }
+});
+function MessageBoxDialog($$payload, $$props) {
+  push();
+  const {
+    type = "ok",
+    title = "Message",
+    message = "",
+    showInput = false,
+    inputLabel = "",
+    inputPlaceholder = ""
+  } = $$props;
+  let inputValue = "";
+  let isClosing = false;
+  onDestroy(() => {
+  });
+  $$payload.out += `<div${attr_class("dialog-overlay svelte-ggpa58", void 0, { "closing": isClosing })}><div${attr_class("dialog svelte-ggpa58", void 0, { "closing": isClosing })}><div class="dialog-header svelte-ggpa58"><h3 class="svelte-ggpa58">${escape_html(title)}</h3></div> <div class="dialog-content svelte-ggpa58"><p class="svelte-ggpa58">${escape_html(message)}</p> `;
+  if (showInput) {
+    $$payload.out += "<!--[-->";
+    $$payload.out += `<div class="input-container svelte-ggpa58">`;
+    if (inputLabel) {
+      $$payload.out += "<!--[-->";
+      $$payload.out += `<label for="dialog-input" class="svelte-ggpa58">${escape_html(inputLabel)}</label>`;
+    } else {
+      $$payload.out += "<!--[!-->";
+    }
+    $$payload.out += `<!--]--> <input id="dialog-input" type="text"${attr("value", inputValue)}${attr("placeholder", inputPlaceholder)} autofocus class="svelte-ggpa58"></div>`;
+  } else {
+    $$payload.out += "<!--[!-->";
+  }
+  $$payload.out += `<!--]--></div> <div class="dialog-footer svelte-ggpa58">`;
+  if (type === "yes/no/cancel") {
+    $$payload.out += "<!--[-->";
+    $$payload.out += `<button class="primary-button svelte-ggpa58">Yes</button> <button class="secondary-button svelte-ggpa58">No</button> <button class="cancel-button svelte-ggpa58">Cancel</button>`;
+  } else if (type === "yes/no") {
+    $$payload.out += "<!--[1-->";
+    $$payload.out += `<button class="primary-button svelte-ggpa58">Yes</button> <button class="secondary-button svelte-ggpa58">No</button>`;
+  } else if (type === "ok/cancel") {
+    $$payload.out += "<!--[2-->";
+    $$payload.out += `<button class="primary-button svelte-ggpa58">OK</button> <button class="cancel-button svelte-ggpa58">Cancel</button>`;
+  } else {
+    $$payload.out += "<!--[!-->";
+    $$payload.out += `<button class="primary-button svelte-ggpa58">OK</button>`;
+  }
+  $$payload.out += `<!--]--></div></div></div>`;
+  pop();
+}
+const GitHubSvg = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='utf-8'?%3e%3csvg%20viewBox='0%200%2024%2024'%20xmlns='http://www.w3.org/2000/svg'%3e%3ctitle%3egithub%3c/title%3e%3cdefs%3e%3clinearGradient%20id='purpleGradient'%20x1='0%25'%20y1='0%25'%20x2='100%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20style='stop-color:%236a0dad;stop-opacity:1'%20/%3e%3cstop%20offset='100%25'%20style='stop-color:%23ff1493;stop-opacity:1'%20/%3e%3c/linearGradient%3e%3c/defs%3e%3crect%20width='24'%20height='24'%20fill='none'/%3e%3cpath%20d='M12,2A10,10,0,0,0,8.84,21.5c.5.08.66-.23.66-.5V19.31C6.73,19.91,6.14,18,6.14,18A2.69,2.69,0,0,0,5,16.5c-.91-.62.07-.6.07-.6a2.1,2.1,0,0,1,1.53,1,2.15,2.15,0,0,0,2.91.83,2.16,2.16,0,0,1,.63-1.34C8,16.17,5.62,15.31,5.62,11.5a3.87,3.87,0,0,1,1-2.71,3.58,3.58,0,0,1,.1-2.64s.84-.27,2.75,1a9.63,9.63,0,0,1,5,0c1.91-1.29,2.75-1,2.75-1a3.58,3.58,0,0,1,.1,2.64,3.87,3.87,0,0,1,1,2.71c0,3.82-2.34,4.66-4.57,4.91a2.39,2.39,0,0,1,.69,1.85V21c0,.27.16.59.67.5A10,10,0,0,0,12,2Z'%20fill='url(%23purpleGradient)'/%3e%3c/svg%3e";
 function _page($$payload, $$props) {
   push();
   var $$store_subs;
@@ -551,7 +656,7 @@ function _page($$payload, $$props) {
   let $$settled = true;
   let $$inner_payload;
   function $$render_inner($$payload2) {
-    $$payload2.out += `<main class="svelte-1ud11i7"><div class="app-container svelte-1ud11i7"><div class="sidebar svelte-1ud11i7"><div class="action-buttons-container svelte-1ud11i7"><button class="action-button primary svelte-1ud11i7">New</button> <button class="action-button primary svelte-1ud11i7"${attr("disabled", true, true)}>Speichern</button> <button class="action-button delete svelte-1ud11i7"${attr("disabled", !selectedItemId, true)}>Rename</button> <button class="action-button delete svelte-1ud11i7"${attr("disabled", !selectedItemId, true)}>Delete</button> <button class="action-button assign-key svelte-1ud11i7">Detect Input Device</button> <button class="action-button assign-key svelte-1ud11i7"${attr("disabled", !selectedItemId || assignModeActive, true)}>Assign Key</button> <button class="action-button cancel svelte-1ud11i7"${attr("disabled", true, true)}>Cancel</button></div> <div class="list-container svelte-1ud11i7">`;
+    $$payload2.out += `<main class="svelte-1ud11i7"><div class="app-container svelte-1ud11i7"><div class="sidebar svelte-1ud11i7"><div class="action-buttons-container svelte-1ud11i7"><button class="action-button primary svelte-1ud11i7">New</button> <button class="action-button primary svelte-1ud11i7"${attr("disabled", true, true)}>Speichern</button> <button class="action-button delete svelte-1ud11i7"${attr("disabled", !selectedItemId, true)}>Rename</button> <button class="action-button delete svelte-1ud11i7"${attr("disabled", !selectedItemId, true)}>Delete</button> <button class="action-button assign-key svelte-1ud11i7">Detect Input Device</button> <button class="action-button assign-key svelte-1ud11i7"${attr("disabled", !selectedItemId || assignModeActive, true)}>Assign Key</button> <button class="action-button cancel svelte-1ud11i7"${attr("disabled", true, true)}>Cancel</button></div> <div style="text-align: center; display: flex; align-items: center; justify-content: center; gap: 20px;" class="svelte-1ud11i7"><a target="_blank" rel="noopener noreferrer" class="svelte-1ud11i7"><img${attr("src", GitHubSvg)} style="width: 80px;" alt="GitHub" class="svelte-1ud11i7"></a> <ul style="list-style-type: none; padding: 0; margin: 0; text-align: left;" class="svelte-1ud11i7"><li class="svelte-1ud11i7">• Report bugs</li> <li class="svelte-1ud11i7">• Leave a star</li></ul></div> <div class="list-container svelte-1ud11i7">`;
     ListBox($$payload2, { onitem: itemClicked, Items: items });
     $$payload2.out += `<!----></div></div> <div class="main-content svelte-1ud11i7">`;
     CodeMirror($$payload2, {
@@ -567,6 +672,20 @@ function _page($$payload, $$props) {
     });
     $$payload2.out += `<!----></div></div> `;
     {
+      $$payload2.out += "<!--[!-->";
+    }
+    $$payload2.out += `<!--]--> `;
+    if (store_get($$store_subs ??= {}, "$dialogState", dialogState).visible) {
+      $$payload2.out += "<!--[-->";
+      MessageBoxDialog($$payload2, {
+        type: store_get($$store_subs ??= {}, "$dialogState", dialogState).type,
+        title: store_get($$store_subs ??= {}, "$dialogState", dialogState).title,
+        message: store_get($$store_subs ??= {}, "$dialogState", dialogState).message,
+        showInput: store_get($$store_subs ??= {}, "$dialogState", dialogState).showInput,
+        inputLabel: store_get($$store_subs ??= {}, "$dialogState", dialogState).inputLabel,
+        inputPlaceholder: store_get($$store_subs ??= {}, "$dialogState", dialogState).inputPlaceholder
+      });
+    } else {
       $$payload2.out += "<!--[!-->";
     }
     $$payload2.out += `<!--]--> `;
