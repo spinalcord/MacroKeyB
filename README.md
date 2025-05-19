@@ -12,20 +12,20 @@ This is my first Tauri/Rust project, please leave a star ⭐, that shows me I ca
 ![MacroKeyB Demo1](https://github.com/spinalcord/MacroKeyB/blob/main/ReadmeImages/example.jpg?raw=true)
 
 ## Installation/Download/Run
-
-I recomment the use of AppImage (https://github.com/spinalcord/MacroKeyB/releases)
-
-
 You need root privilges to run MacroKeyB. Read the "Requirements" below why we need that.
 ```sh
 sudo -E myapp.AppImage
 ```
+I recommend the use of `deb` file for Ubuntu LTS like distribution (https://github.com/spinalcord/MacroKeyB/releases).
 
-in case you are using a really new **Nvidia** card or a really old **Nvidia** card right now. 30xx and 40xx should work fine
+in case you are using a really new **Nvidia** card or a really old **Nvidia** card right now, use the parameter below
+
 ```sh
 WEBKIT_DISABLE_DMABUF_RENDERER=1 sudo -E myapp.AppImage
 ```
 
+- Nvidia 20xx 30xx and 40xx should work fine.
+- AMD Cards should work out of the box
 
 
 ## Features
@@ -117,6 +117,11 @@ The built-in Lua interpreter provides access to:
 
 - **Permission Issues**: MacroKeyB requires root privileges to intercept keyboard input. Run with `sudo` or ensure proper permissions are set.
 - **Device Not Detected**: Make sure your secondary keyboard is properly connected and functioning.
+
+use the .deb file instead of AppImage if you facing this error
+```
+macrokeyb: symbol lookup error: /tmp/.mount_macrokrq23lr/usr/lib/libgcrypt.so.20: undefined symbol: gpgrt_add_post_log_func, version GPG_ERROR_1.0
+```
 
 ## ?
 
