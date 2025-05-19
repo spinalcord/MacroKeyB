@@ -77,11 +77,17 @@ MacroKeyB supports Lua scripting to create powerful and flexible macros. Here's 
 
 ```lua
 -- Example macro that types "Hello World" and presses Enter
-function run()
-    keyboard.type("Hello World")
-    keyboard.press("ENTER")
-    return true
+function superCoolFunction()
+  combo({"ctrl", "alt", "t"}, 100) -- Open Terminal with 100 Delay for combo
+  wait(2000)
+  tap("l") -- "l"
+  wait(200)
+  tap("s") -- "s"
+  wait(200)
+  tap("enter") -- enter  
 end
+
+superCoolFunction()
 ```
 
 For more examples and the API documentation, see the [Wiki](https://github.com/yourusername/MacroKeyB/wiki).
