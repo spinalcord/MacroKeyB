@@ -2,7 +2,9 @@
 
 ![MacroKeyB Logo](https://raw.githubusercontent.com/yourusername/MacroKeyB/main/assets/logo.png)
 
-MacroKeyB is a Linux-exclusive tool (currently) that transforms any secondary keyboard into a powerful macro controller. By intercepting and blocking input from a secondary keyboard, MacroKeyB allows you to assign custom Lua scripts to each key, creating a dedicated macro pad for productivity, gaming, or creative workflows.
+MacroKeyB is a Linux-exclusive tool (currently) that transforms any secondary keyboard into a powerful macro controller. By intercepting and blocking input from a secondary keyboard, MacroKeyB allows you to assign custom Lua scripts to each key, creating a dedicated macro pad for productivity, gaming, or creative workflows. 
+
+Please leave a star ⭐, if you want, that shows me I can continue this project 😀
 
 ## Installation/Download/Run
 
@@ -32,10 +34,10 @@ WEBKIT_DISABLE_DMABUF_RENDERER=1 sudo -E myapp.AppImage
 
 ## Screenshots
 
-![MacroKeyB Demo1]()
-![MacroKeyB Demo2]()
+![MacroKeyB Demo2](https://github.com/spinalcord/MacroKeyB/blob/main/ReadmeImages/example3.gif?raw=true)
+![MacroKeyB Demo1](https://github.com/spinalcord/MacroKeyB/blob/main/ReadmeImages/example.jpg?raw=true)
 
-## Requirements
+## Requirements/Limitations
 
 - Linux operating system
 - Root privileges (required for keyboard input interception)
