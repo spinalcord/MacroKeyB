@@ -1,0 +1,240 @@
+[
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "7a3f87f6-6b9e-4c54-8066-53b0902475ee",
+    "content": "<script lang=\"ts\">\n    import ListBox from \"./components/ListBox.svelte\";\n    import type { ListBoxItemData } from \"./components/ListBoxItemData\";\n    import { invoke } from \"@tauri-apps/api/core\";\n    import CodeMirror from \"svelte-codemirror-editor\";\n    import { onMount, onDestroy } from \"svelte\";\nk\n    let items: Array<ListBoxItemData> = $state([]);\n    let selectedItemId: string | null = $state(null);\n    let value = $state(\"\");\n    let lastSavedState = $state({});\n    let hasUnsavedChanges = $state(false);\n    let saveInterval: number;\n\n    onMount(async () => {\n        await initializeData();\n        // KEIN Timer mehr für Autosave - das erledigt jetzt der Backend-Thread\n    });\n\n    onDestroy(() => {\n        // Nichts mehr aufzuräumen, da kein Timer mehr existiert\n    });\n\n    async function initializeData() {\n        try {\n            const some_list: [string, string, string, string, boolean][] = await invoke(\"get_list\");\n            items = []; // leeres Array\n            some_list.forEach(element => {\n                let item: ListBoxItemData = {\n                    displayText: element[0],\n                    labelText: element[1],\n                    id: element[2],\n                    content: element[3],\n                    isSelected: element[4],\n                };\n                items = [...items, item];\n            });\n            \n            // Setze den letzten gespeicherten Zustand\n            updateLastSavedState();\n        } catch (error) {\n            console.error(\"Fehler beim Initialisieren der Daten:\", error);\n        }\n    }\n\n    function updateLastSavedState() {\n        // Aktuelle Items als gespeicherten Zustand festhalten\n        lastSavedState = JSON.stringify(items);\n        hasUnsavedChanges = false;\n    }\n\n    // Diese Funktion wird nicht mehr benötigt, da Auto-Save jetzt im Backend stattfindet\n    // async function autoSaveItems() {\n    //     if (hasUnsavedChanges) {\n    //         try {\n    //             console.log(\"Automatisches Speichern...\");\n    //             await saveItems();\n    //             console.log(\"Automatisches Speichern abgeschlossen\");\n    //         } catch (error) {\n    //             console.error(\"Fehler beim automatischen Speichern:\", error);\n    //         }\n    //     }\n    // }\n\n    async function saveItems() {\n        try {\n            // Konvertiere items in ein Format, das für das Backend geeignet ist\n            const itemsForBackend = items.map(item => [\n                item.displayText,\n                item.labelText,\n                item.id,\n                item.content,\n                item.isSelected\n            ]);\n            \n            // Rufe die Backend-Funktion zum Speichern in den Speicher auf (nicht auf Festplatte)\n            await invoke(\"save_items\", { items: itemsForBackend });\n            \n            // Jetzt manuell auf die Festplatte speichern\n            await invoke(\"persist_to_disk\");\n            \n            // Aktualisiere den gespeicherten Zustand\n            updateLastSavedState();\n            console.log(\"Items wurden erfolgreich gespeichert\");\n        } catch (error) {\n            console.error(\"Fehler beim Speichern der Items:\", error);\n            // Zeige dem Benutzer eine Fehlermeldung an\n            alert(\"Fehler beim Speichern der Items: \" + error);\n        }\n    }\n\n    async function addItem() {\n        try {\n            let newItem: [string, string, string, string, boolean] = await invoke(\"add_item\");\n            let item: ListBoxItemData = {\n                displayText: newItem[0],\n                labelText: newItem[1],\n                id: newItem[2],\n                content: newItem[3],\n                isSelected: newItem[4],\n            };\n            items = [...items, item];\n            hasUnsavedChanges = true;\n        } catch (error) {\n            console.error(\"Fehler beim Hinzufügen eines Items:\", error);\n        }\n    }\n\n    async function deleteItem() {\n        try {\n            const indexToDelete = items.findIndex(item => item.isSelected);\n            if (indexToDelete !== -1) {\n                await invoke(\"delete_item\", { id: items[indexToDelete].id });\n                items = items.filter(item => !item.isSelected);\n                value = \"\"; // Editor leeren\n                selectedItemId = null;\n                hasUnsavedChanges = true;\n            }\n        } catch (error) {\n            console.error(\"Fehler beim Löschen des Items:\", error);\n        }\n    }\n\n    async function renameItem() {\n        const selectedItem = items.find(item => item.isSelected);\n        if (selectedItem) {\n            const newName = prompt(\"Neuen Namen eingeben:\", selectedItem.displayText);\n            if (newName && newName.trim() !== \"\") {\n                try {\n                    await invoke(\"rename_item\", { id: selectedItem.id, newName });\n                    \n                    // Aktualisiere das Item in der lokalen Liste\n                    items = items.map(item => {\n                        if (item.id === selectedItem.id) {\n                            return { ...item, displayText: newName };\n                        }\n                        return item;\n                    });\n                    \n                    hasUnsavedChanges = true;\n                } catch (error) {\n                    console.error(\"Fehler beim Umbenennen des Items:\", error);\n                }\n            }\n        }\n    }\n\n    function updateItemContent(event: CustomEvent) {\n        const newValue = event.detail;\n        \n        // Aktualisiere den Inhalt des ausgewählten Items\n        if (selectedItemId) {\n            items = items.map(item => {\n                if (item.id === selectedItemId) {\n                    return { ...item, content: newValue };\n                }\n                return item;\n            });\n            \n            hasUnsavedChanges = true;\n        }\n        \n        // Update value für CodeMirror\n        value = newValue;\n    }\n\n    async function itemClicked(targetItem: ListBoxItemData) {\n        // Wenn ein Item bereits ausgewählt ist, speichere dessen Inhalt bevor wir wechseln\n        if (selectedItemId) {\n            // Finde das aktuelle Item und aktualisiere seinen Inhalt\n            items = items.map(item => {\n                if (item.id === selectedItemId) {\n                    return { ...item, content: value };\n                }\n                return item;\n            });\n        }\n\n        // Setze alle Items auf nicht ausgewählt und das geklickte Item auf ausgewählt\n        items = items.map(item => {\n            return {\n                ...item,\n                isSelected: item.id === targetItem.id\n            };\n        });\n\n        // Aktualisiere den Bearbeitungszustand\n        selectedItemId = targetItem.id;\n        value = targetItem.content;\n    }\n</script>\n\n<main>\n    <div class=\"app-container\">\n        <div class=\"sidebar\">\n            <div class=\"action-buttons-container\">\n                <button on:click={addItem} class=\"action-button\">Neu</button>\n                <button on:click={renameItem} class=\"action-button\" disabled={!selectedItemId}>Umbenennen</button>\n                <button on:click={deleteItem} class=\"action-button\" disabled={!selectedItemId}>Löschen</button>\n                <button on:click={saveItems} class=\"action-button\" disabled={!hasUnsavedChanges}>Speichern</button>\n            </div>\n            <div class=\"list-container\">\n                <ListBox onitem={itemClicked} Items={items} />\n            </div>\n        </div>\n        <div class=\"main-content\">\n            <CodeMirror \n                bind:value \n                on:change={e => updateItemContent(e)} \n                class=\"codemirror-container\" \n            />\n        </div>\n    </div>\n</main>\n\n<style>\n    .app-container {\n        display: flex;\n        flex-direction: row;\n        height: 100vh;\n        width: 100%;\n    }\n    main {\n        height: 100vh;\n        width: 100%;\n    }\n    .sidebar {\n        display: flex;\n        flex-direction: column;\n        flex-shrink: 0;\n        width: 250px;\n        border-right: 1px solid #ccc;\n    }\n    .action-buttons-container {\n        display: flex;\n        flex-wrap: wrap;\n        gap: 5px;\n        padding: 10px;\n    }\n    .action-button {\n        flex: 1 1 calc(50% - 5px);\n        padding: 5px;\n        text-align: center;\n    }\n    .action-button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n    }\n    .list-container {\n        display: flex;\n        flex-direction: column;\n        flex-grow: 1;\n        overflow: auto;\n    }\n    .main-content {\n        display: flex;\n        flex-grow: 1;\n        overflow: hidden; /* Verhindert Scrollbalken */\n    }\n    :global(.codemirror-container) {\n        width: 100%;\n        height: 100%;\n    }\n    :global(.cm-editor) {\n        height: 100%;\n    }\n</style>",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "16bbd843-4c3d-4393-80cc-c5d322ae84ba",
+    "content": "fdsgsfsfsfkkkxx",
+    "is_selected": true
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "780c2f3c-7e71-4fbf-9dbb-a430d63a2d21",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "db5c195f-a97f-4636-90c7-4df31ec67456",
+    "content": "dfasf",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "0775b9e9-eb72-498f-92fa-124b8d88c9de",
+    "content": "kkk",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "53e03b6b-f36f-46c7-b78a-dfaded229ea2",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "d35ff1bd-8e1c-4739-ab16-3eff3fbef17b",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "39254a27-870d-45e7-9890-8fd2f36bfb3a",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "efbe089c-00f2-4421-bc56-c8300863f81f",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "13b1fff9-d880-43c3-8e2c-1b26b2419c39",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "78577bd7-8496-46de-804c-febb791ac02d",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "f1e47aa2-a0f4-4f0c-b177-67e28ad39442",
+    "content": "asdfasdfasdfasdfasdfasdfasdfasdf",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "9de8757d-cd61-4004-b797-887282430bf5",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "06709a13-0a6a-4499-8e1d-0c9aef796eb4",
+    "content": "<script lang=\"ts\">\n    import ListBox from \"./components/ListBox.svelte\";\n    import type { ListBoxItemData } from \"./components/ListBoxItemData\";\n    import { invoke } from \"@tauri-apps/api/core\";\n    import CodeMirror from \"svelte-codemirror-editor\";\n    import { onMount, onDestroy } from \"svelte\";\n\n    let items: Array<ListBoxItemData> = $state([]);\n    let selectedItemId: string | null = $state(null);\n    let value = $state(\"\");\n    let lastSavedState = $state({});\n    let hasUnsavedChanges = $state(false);\n    let saveInterval: number;\n\n    onMount(async () => {\n        await initializeData();\n        // KEIN Timer mehr für Autosave - das erledigt jetzt der Backend-Thread\n    });\n\n    onDestroy(() => {\n        // Nichts mehr aufzuräumen, da kein Timer mehr existiert\n    });\n\n    async function initializeData() {\n        try {\n            const some_list: [string, string, string, string, boolean][] = await invoke(\"get_list\");\n            items = []; // leeres Array\n            some_list.forEach(element => {\n                let item: ListBoxItemData = {\n                    displayText: element[0],\n                    labelText: element[1],\n                    id: element[2],\n                    content: element[3],\n                    isSelected: element[4],\n                };\n                items = [...items, item];\n            });\n            \n            // Setze den letzten gespeicherten Zustand\n            updateLastSavedState();\n        } catch (error) {\n            console.error(\"Fehler beim Initialisieren der Daten:\", error);\n        }\n    }\n\n    function updateLastSavedState() {\n        // Aktuelle Items als gespeicherten Zustand festhalten\n        lastSavedState = JSON.stringify(items);\n        hasUnsavedChanges = false;\n    }\n\n    // Diese Funktion wird nicht mehr benötigt, da Auto-Save jetzt im Backend stattfindet\n    // async function autoSaveItems() {\n    //     if (hasUnsavedChanges) {\n    //         try {\n    //             console.log(\"Automatisches Speichern...\");\n    //             await saveItems();\n    //             console.log(\"Automatisches Speichern abgeschlossen\");\n    //         } catch (error) {\n    //             console.error(\"Fehler beim automatischen Speichern:\", error);\n    //         }\n    //     }\n    // }\n\n    async function saveItems() {\n        try {\n            // Konvertiere items in ein Format, das für das Backend geeignet ist\n            const itemsForBackend = items.map(item => [\n                item.displayText,\n                item.labelText,\n                item.id,\n                item.content,\n                item.isSelected\n            ]);\n            \n            // Rufe die Backend-Funktion zum Speichern in den Speicher auf (nicht auf Festplatte)\n            await invoke(\"save_items\", { items: itemsForBackend });\n            \n            // Jetzt manuell auf die Festplatte speichern\n            await invoke(\"persist_to_disk\");\n            \n            // Aktualisiere den gespeicherten Zustand\n            updateLastSavedState();\n            console.log(\"Items wurden erfolgreich gespeichert\");\n        } catch (error) {\n            console.error(\"Fehler beim Speichern der Items:\", error);\n            // Zeige dem Benutzer eine Fehlermeldung an\n            alert(\"Fehler beim Speichern der Items: \" + error);\n        }\n    }\n\n    async function addItem() {\n        try {\n            let newItem: [string, string, string, string, boolean] = await invoke(\"add_item\");\n            let item: ListBoxItemData = {\n                displayText: newItem[0],\n                labelText: newItem[1],\n                id: newItem[2],\n                content: newItem[3],\n                isSelected: newItem[4],\n            };\n            items = [...items, item];\n            hasUnsavedChanges = true;\n        } catch (error) {\n            console.error(\"Fehler beim Hinzufügen eines Items:\", error);\n        }\n    }\n\n    async function deleteItem() {\n        try {\n            const indexToDelete = items.findIndex(item => item.isSelected);\n            if (indexToDelete !== -1) {\n                await invoke(\"delete_item\", { id: items[indexToDelete].id });\n                items = items.filter(item => !item.isSelected);\n                value = \"\"; // Editor leeren\n                selectedItemId = null;\n                hasUnsavedChanges = true;\n            }\n        } catch (error) {\n            console.error(\"Fehler beim Löschen des Items:\", error);\n        }\n    }\n\n    async function renameItem() {\n        const selectedItem = items.find(item => item.isSelected);\n        if (selectedItem) {\n            const newName = prompt(\"Neuen Namen eingeben:\", selectedItem.displayText);\n            if (newName && newName.trim() !== \"\") {\n                try {\n                    await invoke(\"rename_item\", { id: selectedItem.id, newName });\n                    \n                    // Aktualisiere das Item in der lokalen Liste\n                    items = items.map(item => {\n                        if (item.id === selectedItem.id) {\n                            return { ...item, displayText: newName };\n                        }\n                        return item;\n                    });\n                    \n                    hasUnsavedChanges = true;\n                } catch (error) {\n                    console.error(\"Fehler beim Umbenennen des Items:\", error);\n                }\n            }\n        }\n    }\n\n    function updateItemContent(event: CustomEvent) {\n        const newValue = event.detail;\n        \n        // Aktualisiere den Inhalt des ausgewählten Items\n        if (selectedItemId) {\n            items = items.map(item => {\n                if (item.id === selectedItemId) {\n                    return { ...item, content: newValue };\n                }\n                return item;\n            });\n            \n            hasUnsavedChanges = true;\n        }\n        \n        // Update value für CodeMirror\n        value = newValue;\n    }\n\n    async function itemClicked(targetItem: ListBoxItemData) {\n        // Wenn ein Item bereits ausgewählt ist, speichere dessen Inhalt bevor wir wechseln\n        if (selectedItemId) {\n            // Finde das aktuelle Item und aktualisiere seinen Inhalt\n            items = items.map(item => {\n                if (item.id === selectedItemId) {\n                    return { ...item, content: value };\n                }\n                return item;\n            });\n        }\n\n        // Setze alle Items auf nicht ausgewählt und das geklickte Item auf ausgewählt\n        items = items.map(item => {\n            return {\n                ...item,\n                isSelected: item.id === targetItem.id\n            };\n        });\n\n        // Aktualisiere den Bearbeitungszustand\n        selectedItemId = targetItem.id;\n        value = targetItem.content;\n    }\n</script>\n\n<main>\n    <div class=\"app-container\">\n        <div class=\"sidebar\">\n            <div class=\"action-buttons-container\">\n                <button on:click={addItem} class=\"action-button\">Neu</button>\n                <button on:click={renameItem} class=\"action-button\" disabled={!selectedItemId}>Umbenennen</button>\n                <button on:click={deleteItem} class=\"action-button\" disabled={!selectedItemId}>Löschen</button>\n                <button on:click={saveItems} class=\"action-button\" disabled={!hasUnsavedChanges}>Speichern</button>\n            </div>\n            <div class=\"list-container\">\n                <ListBox onitem={itemClicked} Items={items} />\n            </div>\n        </div>\n        <div class=\"main-content\">\n            <CodeMirror \n                bind:value \n                on:change={e => updateItemContent(e)} \n                class=\"codemirror-container\" \n            />\n        </div>\n    </div>\n</main>\n\n<style>\n    .app-container {\n        display: flex;\n        flex-direction: row;\n        height: 100vh;\n        width: 100%;\n    }\n    main {\n        height: 100vh;\n        width: 100%;\n    }\n    .sidebar {\n        display: flex;\n        flex-direction: column;\n        flex-shrink: 0;\n        width: 250px;\n        border-right: 1px solid #ccc;\n    }\n    .action-buttons-container {\n        display: flex;\n        flex-wrap: wrap;\n        gap: 5px;\n        padding: 10px;\n    }\n    .action-button {\n        flex: 1 1 calc(50% - 5px);\n        padding: 5px;\n        text-align: center;\n    }\n    .action-button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n    }\n    .list-container {\n        display: flex;\n        flex-direction: column;\n        flex-grow: 1;\n        overflow: auto;\n    }\n    .main-content {\n        display: flex;\n        flex-grow: 1;\n        overflow: hidden; /* Verhindert Scrollbalken */\n    }\n    :global(.codemirror-container) {\n        width: 100%;\n        height: 100%;\n    }\n    :global(.cm-editor) {\n        height: 100%;\n    }\n</style>",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "4cd80081-b9fe-4e0a-8b02-4136fe25c0c7",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "dbb8a61e-af10-4d78-8a0c-d6c0af119eb9",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "6275578d-9aed-4d2f-945c-285f313a7615",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "2c97fbda-6b72-413e-a87e-a73167e39b16",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "391eb20c-603b-4f39-86af-3dcb4df7d663",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "0a5c53aa-0f35-4671-87d3-8a06d842319d",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "7df4c0e5-08d6-4909-b72a-0f6aa04c7627",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "e013f230-169b-4870-902b-d0ee58a4fa90",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "bc928807-bf24-4f77-861a-2ec83610e0a9",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "14c93fb6-20e9-47f7-9362-a2aeb5789836",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "cf7b4efb-5523-49d2-8e91-dfdf9992fffe",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "e632a60e-26db-4e53-bf04-f34c2fba9971",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "8f7ff3fb-2997-4e0d-aae7-8ffc4ec340c2",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "a74489e7-d0a6-4133-b841-ddfb3c654c33",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "561fa4d8-8bd2-4ce8-b9e9-135529e29ec1",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "a1797473-d117-4611-a29b-47e8119a5134",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "becf82a2-1ce1-4f5c-8255-3e1871ccb64e",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "240132ce-8e71-435f-aa01-91507d0daf2d",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "16dbc217-1ce4-4cba-8c3e-15a0d9ad3b2c",
+    "content": "",
+    "is_selected": false
+  },
+  {
+    "display_text": "Neues Item",
+    "label_text": "neu",
+    "id": "5993e1fa-b61a-41dc-b253-58f2693423f2",
+    "content": "",
+    "is_selected": false
+  }
+]

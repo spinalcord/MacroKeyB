@@ -1,0 +1,108 @@
+/* CodeMirror Theme-Anpassungen - Verbesserte Version */
+
+/* Grundlegende Editor-Styles */
+:global(.cm-editor) {
+  height: 100% !important;
+  background-color: #1E1E1E !important;
+}
+
+:global(.cm-scroller) {
+  background-color: #1E1E1E !important;
+}
+
+:global(.cm-content) {
+  color: #D4D4D4 !important;
+  caret-color: #FFFFFF !important;
+}
+
+:global(.cm-line) {
+  color: #D4D4D4 !important;
+  padding: 0 4px !important;
+}
+
+/* Hervorhebung der aktiven Zeile */
+:global(.cm-activeLine) {
+  background-color: #2A2A2A !important;
+}
+
+/* Auswahl-Styles */
+:global(.cm-selectionBackground) {
+  background-color: rgba(134, 97, 240, 0.3) !important;
+}
+
+:global(.cm-selectionMatch) {
+  background-color: rgba(134, 97, 240, 0.2) !important;
+}
+
+/* Cursor-Style */
+:global(.cm-cursor) {
+  border-left: 1.2px solid #FFFFFF !important;
+}
+
+/* Gutters und Zeilennummern */
+:global(.cm-gutters) {
+  background-color: #121212 !important;
+  border-right: 1px solid #333333 !important;
+  color: #858585 !important;
+  padding-right: 5px !important;
+}
+
+:global(.cm-lineNumbers .cm-gutterElement) {
+  color: #858585 !important;
+}
+
+:global(.cm-activeLineGutter) {
+  background-color: #2A2A2A !important;
+}
+
+/* Lua-Syntax Hervorhebung */
+:global(.cm-keyword) {
+  color: #A48CF4 !important;
+}
+
+:global(.cm-operator) {
+  color: #FFFFFF !important;
+}
+
+:global(.cm-string) {
+  color: #4CAF50 !important;
+}
+
+:global(.cm-number) {
+  color: #2196F3 !important;
+}
+
+:global(.cm-comment) {
+  color: #8A8A8A !important;
+  font-style: italic !important;
+}
+
+:global(.cm-def), :global(.cm-variable) {
+  color: #B3B3B3 !important;
+}
+
+/* Spezifische Styles für die Schrift */
+:global(.cm-editor), :global(.cm-content), :global(.cm-line) {
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
+}
+
+/* Scrollbar im dunklen Design */
+:global(.cm-scroller::-webkit-scrollbar) {
+  width: 10px;
+  height: 10px;
+}
+
+:global(.cm-scroller::-webkit-scrollbar-track) {
+  background: #121212;
+}
+
+:global(.cm-scroller::-webkit-scrollbar-thumb) {
+  background: #333333;
+  border-radius: 5px;
+}
+
+:global(.cm-scroller::-webkit-scrollbar-thumb:hover) {
+  background: #444444;
+}
