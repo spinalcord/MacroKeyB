@@ -4,7 +4,7 @@
 
 MacroKeyB is a Linux-exclusive tool (currently) that transforms any secondary keyboard into a powerful macro controller. By intercepting and blocking input from a secondary keyboard, MacroKeyB allows you to assign custom Lua scripts to each key, creating a dedicated macro pad for productivity, gaming, or creative workflows. 
 
-Please leave a star ⭐, if you want, that shows me I can continue this project 😀
+This my first Tauri/Rust project, please leave a star ⭐, that shows me I can continue this project 😀
 
 ## Screenshots
 
