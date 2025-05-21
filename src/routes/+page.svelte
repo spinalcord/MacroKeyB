@@ -454,13 +454,19 @@ async function renameItem() {
                 <ListBox onitem={itemClicked} Items={items} />
             </div>
         </div>
-        <div class="main-content">
-            <CodeMirror 
-                bind:value 
-                on:change={e => updateItemContent(e)} 
-                class="codemirror-container"
-                extensions={cmExtensions}
-            />
+               <div class="main-content">
+            {#if selectedItemId}
+                <CodeMirror 
+                    bind:value 
+                    on:change={e => updateItemContent(e)} 
+                    class="codemirror-container"
+                    extensions={cmExtensions}
+                />
+            {:else}
+                <div class="no-selection-message">
+                    <p>No item selected</p>
+                </div>
+            {/if}
         </div>
     </div>
     
@@ -512,6 +518,7 @@ async function renameItem() {
 </main>
 
 <style>
+
 .app-container {
   display: flex;
   flex-direction: row;
@@ -530,6 +537,26 @@ main {
   flex-shrink: 0;
   width: 250px;
   border-right: 1px solid var(--border-color);
+}
+
+.no-selection-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  background-color: var(--bg-secondary);
+  color: var(--text-tertiary);
+  font-size: 1.2em;
+  text-align: center;
+  border-radius: 4px;
+  border: 1px dashed var(--border-color);
+  margin: 2px;
+}
+
+.no-selection-message p {
+  padding: 20px;
+  max-width: 80%;
 }
 
 /* Improved Styles for Action Buttons */
