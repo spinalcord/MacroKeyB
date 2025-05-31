@@ -1,4 +1,4 @@
-// main.rs
+// lib.rs
 // Import necessary libraries for error handling, serialization/deserialization, file operations, etc.
 use serde::{Deserialize, Serialize};
 use tauri::menu::{Menu, MenuItem};
@@ -19,7 +19,7 @@ use tokio::time;
 
 
 mod frontend;
-// ====== Global Status Variables ======
+// ====== Global State Variables ======
 // AppState struct to manage the application's global state using thread-safe primitives
 struct AppState {
     blocking_active: AtomicBool,          // Flag indicating if keyboard blocking is active
@@ -66,7 +66,7 @@ struct Item {
 
 
 // ====== File Operation Functions ======
-// Initialize the configuration directory
+// Initializes the configuration directory
 fn init_config_dir() -> Result<PathBuf, String> {
     // Get the user's home directory
     let home_dir = dirs::home_dir()
@@ -110,7 +110,7 @@ fn get_keyb_path() -> PathBuf {
         })
 }
 
-// Load items from the JSON file
+// Loads items from the JSON file
 fn load_items() -> Vec<Item> {
     let path = get_items_path();
     
@@ -135,7 +135,7 @@ fn load_items() -> Vec<Item> {
     }
 }
 
-// Save items to JSON file with atomic write
+// Saves items to JSON file with atomic write
 fn save_items_to_file(items: &[Item]) -> Result<(), String> {
     let path = get_items_path();
     let temp_path = path.with_extension("json.tmp");
@@ -172,7 +172,7 @@ fn save_items_to_file(items: &[Item]) -> Result<(), String> {
     Ok(())
 }
 
-// Initialize items at program start
+// Initializes items at program start
 fn init_items() {
     let mut items_lock = STATE.items.lock().unwrap();
     if items_lock.is_none() {
@@ -181,7 +181,7 @@ fn init_items() {
 }
 
 // ====== Keyboard Helper Functions ======
-// Add standard key listener to handle keypresses
+// Adds standard key listener to handle keypresses
 fn add_standard_key_listener(keyb: &KeyboardListener::Instance) {
     // Clear previous listeners
     keyb.on_key.clear_listeners();
@@ -225,7 +225,7 @@ fn handle_key(key_name: &str, key_state: &KeyboardListener::KeyState) {
                     Ok(_) => {
                         let timestamp = get_formatted_timestamp();
                         println!("Key '{}' was assigned to item with ID '{}'", key_name, id);
-                        // also send an event with a timestamp here if needed
+                          // Also send an event with a timestamp here if needed
                         if let Err(e) = frontend::send_event("key-assigned", &format!("{{\"status\":\"success\",\"itemId\":\"{}\",\"key\":\"{}\",\"timestamp\":\"{}\"}}", id, key_name, timestamp)) {
                             eprintln!("Error sending Key-Assigned event: {}", e);
                         }
@@ -242,12 +242,12 @@ fn handle_key(key_name: &str, key_state: &KeyboardListener::KeyState) {
                             key_name, 
                             e.to_string().replace("\"", "\\\"").replace("\n", "\\n"),
                             timestamp)) {
-                            eprintln!("Fehler beim Senden des Key-Assign-Error-Events: {}", send_err);
+                            eprintln!("Error sending Key-Assign-Error event: {}", send_err);
                         }
                     }
                 }
                 
-                // Zuweisungsmodus beenden
+                // End assignment mode
                 STATE.assign_mode_active.store(false, Ordering::SeqCst);
             } else {
                 // Should not happen - we are in assignment mode without item ID
@@ -296,7 +296,7 @@ fn handle_key(key_name: &str, key_state: &KeyboardListener::KeyState) {
             }
         };
         
-        // Lua-Skript ausführen und Fehler an Frontend senden
+        // Execute Lua script and send errors to frontend
         if let Some((item_id, item_name, content)) = script_content {
             match LuaManager::new() {
                 Ok(lua_script) => {
@@ -482,7 +482,7 @@ fn start_blocking_device(device: &KeyboardListener::DeviceInfo) -> Result<(), St
 }
 
 // ====== Tauri Command Functions ======
-// Load previously detected keyboard from config
+// Loads previously detected keyboard from config
 #[tauri::command]
 fn load_emited_keyboard() -> Result<String, String> {
     println!("Loading previously detected keyboard from JSON...");
@@ -531,7 +531,7 @@ fn load_emited_keyboard() -> Result<String, String> {
     }
 }
 
-// Release all blocked devices
+// Releases all blocked devices
 #[tauri::command]
 fn release_blocked_devices() -> Result<(), String> {
     println!("Releasing all blocked devices...");
@@ -570,7 +570,7 @@ fn release_blocked_devices() -> Result<(), String> {
     Ok(())
 }
 
-// Wait for and detect keyboard input
+// Waits for and detects keyboard input
 #[tauri::command]
 async fn wait_for_keypress() -> Result<String, String> {
     println!("Starting keyboard detection...");
@@ -661,7 +661,7 @@ async fn wait_for_keypress() -> Result<String, String> {
     result
 }
 
-// Cancel keyboard detection process
+// Cancels keyboard detection process
 #[tauri::command]
 async fn cancel_keypress_detection() -> Result<(), String> {
     println!("Cancelling keyboard detection and blocking");
@@ -701,7 +701,7 @@ async fn cancel_keypress_detection() -> Result<(), String> {
 }
 
 // ====== Item Management Functions ======
-// Select an item by ID
+// Selects an item by ID
 #[tauri::command]
 fn select_item(id: String) -> Result<(), String> {
     init_items();
@@ -718,7 +718,7 @@ fn select_item(id: String) -> Result<(), String> {
     }
 }
 
-// Get list of all items
+// Gets list of all items
 #[tauri::command]
 fn get_list() -> Vec<(String, String, String, String, bool)> {
     init_items();
@@ -738,7 +738,7 @@ fn get_list() -> Vec<(String, String, String, String, bool)> {
     }
 }
 
-// Add a new item
+// Adds a new item
 #[tauri::command]
 fn add_item() -> (String, String, String, String, bool) {
     init_items();
@@ -777,7 +777,7 @@ fn add_item() -> (String, String, String, String, bool) {
     result
 }
 
-// Rename an item
+// Renames an item
 #[tauri::command]
 fn rename_item(id: String, new_name: String) -> Result<(), String> {
     init_items();
@@ -795,7 +795,7 @@ fn rename_item(id: String, new_name: String) -> Result<(), String> {
     }
 }
 
-// Delete an item
+// Deletes an item
 #[tauri::command]
 fn delete_item(id: String) -> Result<(), String> {
     init_items();
@@ -815,7 +815,7 @@ fn delete_item(id: String) -> Result<(), String> {
     }
 }
 
-// Save all items (from UI)
+// Saves all items (from UI)
 #[tauri::command]
 fn save_items(items: Vec<(String, String, String, String, bool)>) -> Result<(), String> {
     // Convert back to Item structures
@@ -837,7 +837,7 @@ fn save_items(items: Vec<(String, String, String, String, bool)>) -> Result<(), 
     save_items_to_file(&items)
 }
 
-// Update content of an item
+// Updates content of an item
 #[tauri::command]
 fn update_item_content(id: String, content: String) -> Result<(), String> {
     init_items();
@@ -855,7 +855,7 @@ fn update_item_content(id: String, content: String) -> Result<(), String> {
     }
 }
 
-// Get current status of keyboard locks
+// Gets current status of keyboard locks
 #[tauri::command]
 fn get_keyboard_status() -> (bool, bool, Option<String>) {
     let is_blocking = STATE.blocking_active.load(Ordering::SeqCst);
@@ -867,7 +867,7 @@ fn get_keyboard_status() -> (bool, bool, Option<String>) {
 
 
 
-// Initialize and run the application
+// Initializes and runs the application
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // Ensure no blocking or detection is active at startup
@@ -891,7 +891,7 @@ pub fn run() {
     // Initialize Tauri application with command handlers
     tauri::Builder::default()
      .setup(|app| {
-            // Event-Manager initialisieren
+            // Initialize event manager
             frontend::init(app.handle().clone());
 
 
