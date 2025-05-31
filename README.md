@@ -91,7 +91,26 @@ end
 superCoolFunction()
 ```
 
-For more examples and the API documentation, see the [Wiki](https://github.com/yourusername/MacroKeyB/wiki).
+```lua
+backup_clipboard = clipboard() -- clipboard()  gets what is inside the clipboard
+
+clipboard([[
+
+  Some cool text 1.
+  Some cool text 2
+  and so on ...
+    
+]]) -- clipboard(...) sets clipboard
+combo({"ctrl", "v"}, 50)
+
+clipboard(backup_clipboard) -- restore clipboard
+```
+
+```lua
+exec_bash("firefox") -- run app
+local someVar = exec_bash("ls", {"output"}); -- stores output
+```
+
 
 ## Key Features in Detail
 
