@@ -894,6 +894,7 @@ pub fn run() {
             // Initialize event manager
             frontend::init(app.handle().clone());
 
+            init_system_tray(app)?;
 
             Ok(())
         })
@@ -917,4 +918,58 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+
+// System Tray initialization function
+fn init_system_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+    use tauri::{
+        menu::{Menu, MenuItem},
+        tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+        Manager,
+    };
+
+    // Create menu items
+    let show_item = MenuItem::with_id(app, "show", "Show", true, None::<&str>)?;
+    let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+    
+    // Create menu
+    let menu = Menu::with_items(app, &[&show_item, &quit_item])?;
+
+    // Build tray icon
+    let _tray = TrayIconBuilder::new()
+        .menu(&menu)
+        .show_menu_on_left_click(true)
+        .on_menu_event(move |app, event| {
+            match event.id.as_ref() {
+                "show" => {
+                    if let Some(window) = app.get_webview_window("main") {
+                        let _ = window.show();
+                        let _ = window.set_focus();
+                    }
+                }
+                "quit" => {
+                    app.exit(0);
+                }
+                _ => {}
+            }
+        })
+        .on_tray_icon_event(|_tray, event| {
+            // Handle tray icon events if needed
+            match event {
+                TrayIconEvent::Click {
+                    button: MouseButton::Left,
+                    button_state: MouseButtonState::Up,
+                    ..
+                } => {
+                    // Optional: Handle left click on tray icon
+                    println!("Tray icon left clicked");
+                }
+                _ => {}
+            }
+        })  .icon(app.default_window_icon().unwrap().clone())
+
+        .build(app)?;
+
+    Ok(())
 }

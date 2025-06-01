@@ -29,7 +29,6 @@ declare module '$env/static/private' {
 	export const SHELL: string;
 	export const npm_command: string;
 	export const SESSION_MANAGER: string;
-	export const USER_ZDOTDIR: string;
 	export const QT_SCREEN_SCALE_FACTORS: string;
 	export const npm_config_userconfig: string;
 	export const COLORTERM: string;
@@ -78,7 +77,6 @@ declare module '$env/static/private' {
 	export const LS_OPTIONS: string;
 	export const VSCODE_GIT_ASKPASS_NODE: string;
 	export const MOTD_SHOWN: string;
-	export const VSCODE_INJECTION: string;
 	export const GTK2_RC_FILES: string;
 	export const HOME: string;
 	export const LANG: string;
@@ -108,7 +106,6 @@ declare module '$env/static/private' {
 	export const LESS_TERMCAP_me: string;
 	export const LESS_TERMCAP_md: string;
 	export const _CE_CONDA: string;
-	export const VSCODE_NONCE: string;
 	export const npm_config_prefix: string;
 	export const USER: string;
 	export const VSCODE_GIT_IPC_HANDLE: string;
@@ -194,7 +191,6 @@ declare module '$env/dynamic/private' {
 		SHELL: string;
 		npm_command: string;
 		SESSION_MANAGER: string;
-		USER_ZDOTDIR: string;
 		QT_SCREEN_SCALE_FACTORS: string;
 		npm_config_userconfig: string;
 		COLORTERM: string;
@@ -243,7 +239,6 @@ declare module '$env/dynamic/private' {
 		LS_OPTIONS: string;
 		VSCODE_GIT_ASKPASS_NODE: string;
 		MOTD_SHOWN: string;
-		VSCODE_INJECTION: string;
 		GTK2_RC_FILES: string;
 		HOME: string;
 		LANG: string;
@@ -273,7 +268,6 @@ declare module '$env/dynamic/private' {
 		LESS_TERMCAP_me: string;
 		LESS_TERMCAP_md: string;
 		_CE_CONDA: string;
-		VSCODE_NONCE: string;
 		npm_config_prefix: string;
 		USER: string;
 		VSCODE_GIT_IPC_HANDLE: string;

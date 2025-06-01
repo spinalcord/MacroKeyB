@@ -9,42 +9,9 @@
     import DetectKeyboardDialog from "./dialogs/DetectKeyboardDialog.svelte";
     import { eventLuaError } from './stores/eventStore';
     import { getCurrentWindow } from '@tauri-apps/api/window';
-    import { Menu } from '@tauri-apps/api/menu';
-    import { TrayIcon } from '@tauri-apps/api/tray';
-  import { dialogState, showDialog, showAlert, showConfirm, showPrompt } from "./dialogs/dialogManager";
+    import { dialogState, showDialog, showAlert, showConfirm, showPrompt } from "./dialogs/dialogManager";
     import MessageBoxDialog from "./dialogs/MessageBoxDialog.svelte";
     import GitHubSvg from './assets/github.svg';
-
-
-    async function initSystemTray() {
-const menu = await Menu.new({
-  items: [
-    {
-      id: 'show',
-      text: 'Show',
-      action: (id) => {
-        appWindow.show();
-      },
-    },
-    {
-      id: 'quit',
-      text: 'Quit',
-      action: (id) => {
-        appWindow.destroy();
-      },
-    },
-  ],
-});
-
-const options = {
-  menu,
-  menuOnLeftClick: true,
-};
-
-const tray = await TrayIcon.new(options);
-
-    }
-
 
 
  const appWindow = getCurrentWindow();
@@ -127,7 +94,7 @@ const tray = await TrayIcon.new(options);
 
     
     onMount(async () => {
-        initSystemTray();
+        //initSystemTray();
         await initializeData();
         saveInterval = setInterval(autoSaveItems, 30000);
         invoke("load_emited_keyboard");
